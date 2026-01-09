@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
 <head th:fragment="head">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -52,8 +52,20 @@
                     <li class="nav-item">
                         <a class="nav-link" href="/vols">Vols</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/reservations">Réservations</a>
+                    <li class="nav-item" sec:authorize="hasRole('CLIENT')">
+                        <a class="nav-link" href="/my-reservations">Mes Voyages</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                        <a class="nav-link" href="/admin/aircraft">Admin</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="isAnonymous()">
+                        <a class="nav-link" href="/login">Se connecter</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="isAnonymous()">
+                        <a class="nav-link" href="/register">S'inscrire</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="isAuthenticated()">
+                        <a class="nav-link" href="/logout">Se déconnecter</a>
                     </li>
                 </ul>
             </div>

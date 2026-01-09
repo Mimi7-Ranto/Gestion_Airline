@@ -20,6 +20,8 @@ public class VolResponse {
     private LocalDateTime dateArrivee;
     private String idCompany;
     private Integer etatVol;
+    private String numeroVol;
+    private java.math.BigDecimal prixBase;
     private LocalDateTime arriveeEffective;
     private LocalDateTime dateCreation;
     private LocalDateTime dateModification;

@@ -16,6 +16,8 @@ public class VolMapper {
                 .dateDepart(req.getDateDepart())
                 .dateArrivee(req.getDateArrivee())
                 .arriveeEffective(null)
+                .numeroVol(req.getNumeroVol())
+                .prixBase(req.getPrixBase())
                 .build();
         if (req.getIdAvion() != null) v.setAvion(Avion.builder().idAvion(req.getIdAvion()).build());
         if (req.getIdCompany() != null) v.setCompany(Company.builder().idCompany(req.getIdCompany()).build());
@@ -35,6 +37,8 @@ public class VolMapper {
                 .idCompany(v.getCompany() != null ? v.getCompany().getIdCompany() : null)
                 .etatVol(v.getEtatVol() != null ? v.getEtatVol().getEtatVol() : null)
                 .arriveeEffective(v.getArriveeEffective())
+                .numeroVol(v.getNumeroVol())
+                .prixBase(v.getPrixBase())
                 .dateCreation(v.getDateCreation())
                 .dateModification(v.getDateModification())
                 .build();

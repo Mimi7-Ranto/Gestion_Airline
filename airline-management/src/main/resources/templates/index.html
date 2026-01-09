@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
 <head th:replace="~{layout :: head}">
 </head>
 <body>
@@ -58,6 +58,70 @@
                 </div>
             </div>
 
+            <!-- Client view: Recherche vols + Mes voyages -->
+            <div class="row g-4 mt-4" sec:authorize="hasRole('CLIENT')">
+                <div class="col-md-6">
+                    <div class="card h-100 text-center p-4">
+                        <div class="card-body">
+                            <i class="bi bi-search feature-icon"></i>
+                            <h3 class="card-title mt-3">🔍 Recherche Vols</h3>
+                            <p class="card-text">Recherchez un vol par départ, arrivée et date.</p>
+                            <form id="searchForm" class="row g-2" onsubmit="event.preventDefault(); performSearch();">
+                                <div class="col-4"><input id="from" class="form-control" placeholder="Départ"></div>
+                                <div class="col-4"><input id="to" class="form-control" placeholder="Arrivée"></div>
+                                <div class="col-4"><input id="date" type="date" class="form-control"></div>
+                                <div class="col-6 mt-2"><input id="passengers" type="number" min="1" value="1" class="form-control" placeholder="Passagers"></div>
+                                <div class="col-6 mt-2"><button class="btn btn-primary w-100">Rechercher</button></div>
+                            </form>
+                            <div id="searchResults" class="mt-3 text-start"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card h-100 text-center p-4">
+                        <div class="card-body">
+                            <i class="bi bi-journal-bookmark feature-icon"></i>
+                            <h3 class="card-title mt-3">✈️ Mes Voyages</h3>
+                            <p class="card-text">Créer et consulter vos réservations, gérer passagers et billets.</p>
+                            <a href="/my-reservations" class="btn btn-primary">
+                                Voir mes réservations
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-md-6" sec:authorize="hasRole('ADMIN')">
+                    <div class="card h-100 p-4">
+                        <div class="card-body">
+                            <h4>Admin — Gérer les sièges</h4>
+                            <p>Sélectionnez un avion et cliquez sur "Gérer sièges" pour configurer les sièges (admin uniquement).</p>
+                            <div class="d-flex gap-2 align-items-center">
+                                <select id="manageAvionSelect" class="form-select w-50">
+                                    <option value="">Chargement...</option>
+                                </select>
+                                <button id="manageSeatsBtn" class="btn btn-success">Gérer sièges</button>
+                            </div>
+                            <div id="manageMsg" class="mt-2 text-danger"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6" sec:authorize="hasRole('ADMIN')">
+                    <div class="card h-100 p-4">
+                        <div class="card-body">
+                            <h4>Raccourcis</h4>
+                            <p>Accès rapide aux pages d'administration et gestion.</p>
+                            <div class="d-flex gap-2">
+                                <a href="/admin/aircraft" class="btn btn-outline-primary">Liste Avions (admin)</a>
+                                <a href="/admin/reservations/create" class="btn btn-outline-success">Créer réservation (admin)</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="row mt-5">
                 <div class="col-12">
                     <div class="card bg-light">
@@ -93,23 +157,6 @@
     <footer th:replace="~{layout :: footer}"></footer>
 
     <div th:replace="~{layout :: scripts}"></div>
-    <script>
-            // Charger les statistiques
-            async function loadStats() {
-                try {
-                    const aeroports = await fetch('/api/aeroports').then(r => r.json());
-                    const vols = await fetch('/api/vols').then(r => r.json());
-                    
-                    document.getElementById('statsAeroports').textContent = aeroports.length;
-                    document.getElementById('statsVols').textContent = vols.length;
-                    document.getElementById('statsReservations').textContent = '0';
-                    document.getElementById('statsPassagers').textContent = '0';
-                } catch (error) {
-                    console.error('Erreur chargement stats:', error);
-                }
-            }
-            
-            loadStats();
-    </script>
+   <script th:src="@{/js/dashboard.js}"></script>
 </body>
 </html>

@@ -48,6 +48,12 @@ public class Vol {
     @Column(name = "date_arrivee", nullable = false)
     private LocalDateTime dateArrivee;
 
+    @Column(name = "numero_vol", unique = true)
+    private String numeroVol;
+
+    @Column(name = "prix_base", nullable = false)
+    private java.math.BigDecimal prixBase;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_company")
     private Company company;
