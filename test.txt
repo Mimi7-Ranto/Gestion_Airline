@@ -1,1 +1,83 @@
-couocou
+1️⃣ Déclaration de la classe
+@Entity
+@Table(name = "aeroport")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class Aeroport {
+
+
+@Entity : indique que cette classe correspond à une table dans la base de données (ici PostgreSQL). Hibernate / JPA va gérer cette classe pour faire le mapping objet‑relationnel (ORM).
+
+@Table(name = "aeroport") : le nom de la table en base est aeroport.
+
+@Data (Lombok) : génère automatiquement les getters, setters, toString(), hashCode() et equals().
+
+@NoArgsConstructor : crée un constructeur sans arguments.
+
+@AllArgsConstructor : crée un constructeur avec tous les attributs.
+
+@Builder : permet de créer des objets avec le pattern builder, pratique pour écrire :
+
+Aeroport ap = Aeroport.builder()
+                .codeIata("TNR")
+                .nomAeroport("Ivato")
+                .ville("Antananarivo")
+                .pays("Madagascar")
+                .build();
+
+2️⃣ Clé primaire
+@Id
+@GeneratedValue(generator = "aeroport-trigger-id")
+@GenericGenerator(
+    name = "aeroport-trigger-id",
+    strategy = "com.airline.management.config.PostgreSQLTriggerIdGenerator",
+    parameters = {
+        @Parameter(name = "sequence", value = "aeroport_seq"),
+        @Parameter(name = "prefix", value = "AP"),
+        @Parameter(name = "padding", value = "6")
+    }
+)
+@Column(name = "id_aeroport")
+private String idAeroport;
+
+
+@Id : indique que idAeroport est la clé primaire.
+
+@GeneratedValue(generator = "...") : la valeur sera générée automatiquement.
+
+@GenericGenerator(...) :
+
+Utilise une stratégie custom (PostgreSQLTriggerIdGenerator) pour générer les IDs.
+
+Paramètres :
+
+sequence: la séquence PostgreSQL à utiliser (aeroport_seq)
+
+prefix: préfixe pour l’ID (AP) → par ex. AP000001
+
+padding: nombre de zéros pour compléter (6)
+
+@Column(name = "id_aeroport") : correspond à la colonne SQL id_aeroport.
+
+✅ Donc, l’ID sera généré automatiquement comme AP000001, AP000002, etc.
+
+
+
+
+💡 Règles clés à retenir :
+
+Controller → reçoit les requêtes.
+
+Service → logique métier.
+
+Repository → accès DB.
+
+Entity → correspond à la table.
+
+Security → protège les routes et les données.
+
+Config → configuration de Spring et beans.
+
+Resources → templates, CSS, JS, scripts Flyway.

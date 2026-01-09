@@ -1,125 +1,104 @@
--- États de vols
-INSERT INTO Etat_Vol(etat_vol, nom_etat) VALUES
-(1, 'En cours'),
-(2, 'Arrivé'),
-(3, 'Annulé');
+-- =============================================
+-- 1. Companies
+-- =============================================
+INSERT INTO company (nom_company, adresse_comp, telephone, email, site_web, code_iata)
+VALUES
+('Air Madagascar', 'Antananarivo, Madagascar', '+261 20 22 12345', 'contact@airmadagascar.mg', 'www.airmadagascar.mg', 'MDG'),
+('Air France', 'Paris, France', '+33 1 40 60 12 34', 'contact@airfrance.fr', 'www.airfrance.fr', 'AFR');
 
--- États des billets
-INSERT INTO Etat_Billet(id_etat_billet, nom_etat) VALUES
-(1, 'Valide'),
-(2, 'Annulé'),
-(3, 'Utilisé');
+-- =============================================
+-- 2. Aeroports
+-- =============================================
+INSERT INTO aeroport (code_iata, code_icao, nom_aeroport, ville, pays, fuseau_horaire)
+VALUES
+('TNR', 'FMMI', 'Aéroport d\Ivato', 'Antananarivo', 'Madagascar', 'Indian/Mauritius'),
+('CDG', 'LFPG', 'Aéroport Charles de Gaulle', 'Paris', 'France', 'Europe/Paris'),
+('JNB', 'FAOR', 'OR Tambo International', 'Johannesburg', 'South Africa', 'Africa/Johannesburg');
 
--- Types de billets
-INSERT INTO Type_Billet(id_type_billet, nom_type) VALUES
-(1, 'Économique'),
-(2, 'Business'),
-(3, 'Première');
+-- =============================================
+-- 3. Avions
+-- =============================================
+INSERT INTO avion (modele, numero_serie, capacite, etat_avion, id_company, annee_fabrication)
+VALUES
+('Boeing 737', 'SN12345', 180, 1, 'CO000001', 2015),
+('Airbus A320', 'SN54321', 150, 1, 'CO000002', 2018);
 
--- États des avions
-INSERT INTO Etat_Avion(etat_avion, nom_etat) VALUES
-(1, 'Disponible'),
-(2, 'En vol'),
-(3, 'Maintenance');
+-- =============================================
+-- 4. Clients
+-- =============================================
+INSERT INTO utilisateur (email, mot_de_passe, role)
+VALUES
+('rakoto@gmail.com', 'password1', 'CLIENT'),
+('rabe@gmail.com', 'password2', 'CLIENT');
 
+INSERT INTO client (id_utilisateur, nom_client, prenom_client, email, telephone, date_naissance, adresse)
+VALUES
+('US000005', 'Rakoto', 'Jean', 'rakoto@gmail.com', '+261 33 12 345 67', '1990-05-12', 'Antananarivo'),
+('US000006', 'Rabe', 'Marie', 'rabe@gmail.com', '+261 33 76 543 21', '1985-11-23', 'Antananarivo');
 
-INSERT INTO company(nom_company, adresse_comp) VALUES
-('Air Mada', 'Antananarivo, Madagascar'),
-('Fly Express', 'Toamasina, Madagascar');
+-- =============================================
+-- 5. Vols
+-- =============================================
+INSERT INTO vol (numero_vol, id_aeroport_depart, id_aeroport_destination, id_avion, date_depart, date_arrivee, prix_base, id_company)
+VALUES
+('MDG001', 'AP000001', 'AP000002', 'AV000001', '2026-01-15 08:00', '2026-01-15 14:00', 500.00, 'CO000001'),
+('AFR123', 'AP000002', 'AP000003', 'AV000002', '2026-01-20 09:30', '2026-01-20 18:00', 700.00, 'CO000002');
 
-INSERT INTO client(nom_client, prenom_client) VALUES
-('Rakoto', 'Jean'),
-('Rabe', 'Marie'),
-('Andrian', 'Lucie');
+-- =============================================
+-- 6. Reservations
+-- =============================================
+INSERT INTO reservation (id_client, id_vol, nombre_passagers, montant_total)
+VALUES
+('CL000003', 'VO000001', 2, 1000.00),
+('CL000004', 'VO000002', 1, 700.00);
 
+-- =============================================
+-- 7. Passagers
+-- =============================================
+INSERT INTO passager (id_reservation, nom, prenom, date_naissance, numero_passeport, nationalite)
+VALUES
+('RS000003', 'Rakoto', 'Jean', '1990-05-12', 'P1234567', 'Malagasy'),
+('RS000003', 'Rakoto', 'Anna', '1992-08-03', 'P2345678', 'Malagasy'),
+('RS000004', 'Rabe', 'Marie', '1985-11-23', 'P3456789', 'Malagasy');
 
-INSERT INTO avion(modele, capacite, etat_avion, id_company) VALUES
-('Boeing 737', 180, 1, 'CO001'),
-('Airbus A320', 150, 1, 'CO001'),
-('ATR 72', 70, 1, 'CO002');
+-- =============================================
+-- 8. Billets
+-- =============================================
+INSERT INTO billet (id_reservation, id_passager, id_siege, id_etat_billet, id_type_billet, prix)
+VALUES
+('RS000003', 'PA000004', 'SI000001', 1, 1, 500.00),
+('RS000003', 'PA000005', 'SI000002', 1, 1, 500.00),
+('RS000004', 'PA000006', 'SI000003', 1, 2, 700.00);
 
-INSERT INTO avion(modele, capacite, etat_avion, id_company) VALUES
-('Boeing 777', 300, 1, 'CO001'),  
-('Airbus A350', 280, 1, 'CO002');
-
-INSERT INTO aeroport(nom_aeroport, ville, pays) VALUES
-('Ivato', 'Antananarivo', 'Madagascar'),
-('Fascene', 'Nosy Be', 'Madagascar'),
-('Tolagnaro', 'Fort-Dauphin', 'Madagascar');
-
-INSERT INTO aeroport(nom_aeroport, ville, pays) VALUES
-('Ivato', 'Antananarivo', 'Madagascar'),
-('Charles de Gaulle', 'Paris', 'France'),
-('JFK', 'New York', 'USA'),
-('Heathrow', 'London', 'UK');
-
-
--- Vol international 1 : Antananarivo → Paris
-INSERT INTO vol(depart, destination, date_depart, date_arrivee, id_company, etat_vol) VALUES
-('Antananarivo', 'Paris', '2026-02-01 21:00', '2026-02-02 06:00', 'CO001', 1);
-
--- Vol international 2 : Paris → New York
-INSERT INTO vol(depart, destination, date_depart, date_arrivee, id_company, etat_vol) VALUES
-('Paris', 'New York', '2026-02-05 10:00', '2026-02-05 18:00', 'CO001', 1);
-
--- Vol international 3 : Antananarivo → London
-INSERT INTO vol(depart, destination, date_depart, date_arrivee, id_company, etat_vol) VALUES
-('Antananarivo', 'London', '2026-02-10 22:00', '2026-02-11 06:00', 'CO002', 1);
-
--- Clients existants CL001, CL002, CL003
-INSERT INTO reservation(id_client, id_vol) VALUES
-('CL001', 'VO003'), 
-('CL002', 'VO004'), 
-('CL003', 'VO005'); 
-
-INSERT INTO billet(id_reservation, id_etat_billet, id_type_billet, prix) VALUES
-('RS004', 1, 3, 1200.00), -- Première classe
-('RS005', 1, 2, 900.00),  -- Business
-('RS006', 1, 1, 700.00);  -- Économique
-
-
-INSERT INTO vol(depart, destination, date_depart, date_arrivee, id_company, etat_vol) VALUES
-('Antananarivo', 'Nosy Be', '2026-01-10 08:00', '2026-01-10 10:00', 'CO001', 1),
-('Nosy Be', 'Tolagnaro', '2026-01-11 07:00', '2026-01-11 12:00', 'CO002', 1);
+-- =============================================
+-- 9. Paiements
+-- =============================================
+INSERT INTO paiement (id_reservation, montant, methode_paiement, statut)
+VALUES
+('RS000003', 1000.00, 'Carte bancaire', 'PAYE'),
+('RS000003', 700.00, 'Virement', 'EN_ATTENTE');
 
 
--- Réservations mises à jour avec id_reservation pour correspondre aux billets
-INSERT INTO reservation(id_client, id_vol, date_reservation) VALUES
-('CL001', 'VO001', CURRENT_TIMESTAMP), 
-('CL002', 'VO001', CURRENT_TIMESTAMP), 
-('CL003', 'VO002', CURRENT_TIMESTAMP);
+-- =============================================
+-- 10. Sièges pour Avion AV000001 (Boeing 737)
+-- =============================================
+INSERT INTO siege (id_avion, numero_siege, rangee, lettre, classe, est_fenetre, est_couloir, est_sortie_secours)
+VALUES
+('AV000001', '1A', 1, 'A', 'Économie', TRUE, FALSE, FALSE),
+('AV000001', '1B', 1, 'B', 'Économie', FALSE, TRUE, FALSE),
+('AV000001', '1C', 1, 'C', 'Économie', FALSE, FALSE, FALSE),
+('AV000001', '2A', 2, 'A', 'Économie', TRUE, FALSE, FALSE),
+('AV000001', '2B', 2, 'B', 'Économie', FALSE, TRUE, FALSE),
+('AV000001', '2C', 2, 'C', 'Économie', FALSE, FALSE, FALSE);
 
-
-
-INSERT INTO billet(id_reservation, id_etat_billet, id_type_billet, prix) VALUES
-('RS004', 1, 1, 150.00),
-('RS005', 1, 2, 300.00),
-('RS006', 1, 1, 120.00);
-
-
--- Vol VO001 : Antananarivo → Nosy Be
-INSERT INTO escale(id_vol, id_aeroport, id_avion, ordre_escale, heure_depart, heure_arrivee) VALUES
-('VO001', 'AP001', 'AV001', 1, '2026-01-10 08:00', '2026-01-10 08:30'), -- départ Antananarivo
-('VO001', 'AP002', 'AV001', 2, '2026-01-10 09:30', '2026-01-10 10:00'); -- arrivée Nosy Be
-
--- Vol VO002 : Nosy Be → Tolagnaro
-INSERT INTO escale(id_vol, id_aeroport, id_avion, ordre_escale, heure_depart, heure_arrivee) VALUES
-('VO002', 'AP002', 'AV003', 1, '2026-01-11 07:00', '2026-01-11 07:30'), -- départ Nosy Be
-('VO002', 'AP003', 'AV003', 2, '2026-01-11 11:30', '2026-01-11 12:00'); -- arrivée Tolagnaro
-
--- VO003 : Antananarivo → Paris
-INSERT INTO escale(id_vol, id_aeroport, id_avion, ordre_escale, heure_depart, heure_arrivee) VALUES
-('VO003', 'AP001', 'AV004', 1, '2026-02-01 21:00', '2026-02-01 21:30'), 
-('VO003', 'AP004', 'AV004', 2, '2026-02-02 05:30', '2026-02-02 06:00'); 
-
--- VO004 : Paris → New York
-INSERT INTO escale(id_vol, id_aeroport, id_avion, ordre_escale, heure_depart, heure_arrivee) VALUES
-('VO004', 'AP004', 'AV004', 1, '2026-02-05 10:00', '2026-02-05 10:30'), 
-('VO004', 'AP005', 'AV004', 2, '2026-02-05 17:30', '2026-02-05 18:00'); 
-
--- VO005 : Antananarivo → London
-INSERT INTO escale(id_vol, id_aeroport, id_avion, ordre_escale, heure_depart, heure_arrivee) VALUES
-('VO005', 'AP001', 'AV005', 1, '2026-02-10 22:00', '2026-02-10 22:30'), -- départ Antananarivo
-('VO005', 'AP006', 'AV005', 2, '2026-02-11 05:30', '2026-02-11 06:00'); -- arrivée London
-
-
+-- =============================================
+-- 11. Sièges pour Avion AV000002 (Airbus A320)
+-- =============================================
+INSERT INTO siege (id_avion, numero_siege, rangee, lettre, classe, est_fenetre, est_couloir, est_sortie_secours)
+VALUES
+('AV000002', '1A', 1, 'A', 'Business', TRUE, FALSE, FALSE),
+('AV000002', '1B', 1, 'B', 'Business', FALSE, TRUE, FALSE),
+('AV000002', '1C', 1, 'C', 'Business', FALSE, FALSE, FALSE),
+('AV000002', '2A', 2, 'A', 'Économie', TRUE, FALSE, FALSE),
+('AV000002', '2B', 2, 'B', 'Économie', FALSE, TRUE, FALSE),
+('AV000002', '2C', 2, 'C', 'Économie', FALSE, FALSE, FALSE);

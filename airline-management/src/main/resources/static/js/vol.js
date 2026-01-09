@@ -12,6 +12,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadVols();
 });
 
+// =======================
+// Chargement des aéroports
+// =======================
 async function loadAeroports() {
     try {
         const response = await fetch(AEROPORTS_URL);
@@ -20,9 +23,13 @@ async function loadAeroports() {
         const selects = ['aeroportDepartId', 'aeroportDestinationId', 'searchDepartId'];
         selects.forEach(selectId => {
             const select = document.getElementById(selectId);
-            const keepFirst = selectId === 'searchDepartId';
-            if (!keepFirst) select.innerHTML = '<option value="">Sélectionnez...</option>';
             
+            if (selectId === 'searchDepartId') {
+                select.innerHTML = '<option value="">Tous</option>'; // option par défaut pour recherche
+            } else {
+                select.innerHTML = '<option value="">Sélectionnez...</option>'; // modal
+            }
+
             aeroports.forEach(a => {
                 const option = document.createElement('option');
                 option.value = a.idAeroport;
@@ -35,9 +42,15 @@ async function loadAeroports() {
     }
 }
 
+// =======================
+// Chargement des avions et compagnies
+// =======================
 async function loadAvionsAndCompanies() {
     try {
-        const [avionsResp, compsResp] = await Promise.all([fetch('/api/avions'), fetch('/api/companies')]);
+        const [avionsResp, compsResp] = await Promise.all([
+            fetch('/api/avions'), 
+            fetch('/api/companies')
+        ]);
         const avions = await avionsResp.json();
         const comps = await compsResp.json();
 
@@ -65,6 +78,9 @@ async function loadAvionsAndCompanies() {
     }
 }
 
+// =======================
+// Chargement des vols
+// =======================
 async function loadVols() {
     try {
         const response = await fetch(API_URL);
@@ -75,43 +91,64 @@ async function loadVols() {
     }
 }
 
+// =======================
+// Recherche de vols
+// =======================
 async function searchVols() {
     const departId = document.getElementById('searchDepartId').value;
     const from = document.getElementById('searchFrom').value;
     const to = document.getElementById('searchTo').value;
 
-    if (!departId || !from || !to) {
+    // Si aucun filtre, charger tous les vols
+    if (!departId && !from && !to) {
         loadVols();
         return;
     }
 
     try {
-        const url = `${API_URL}/search?departId=${departId}&from=${from}&to=${to}`;
-        const response = await fetch(url);
+        const params = new URLSearchParams();
+        if (departId) params.append('departId', departId);
+        if (from) params.append('from', from);
+        if (to) params.append('to', to);
+
+        const response = await fetch(`${API_URL}/search?${params.toString()}`);
         const vols = await response.json();
-        displayVols(vols);
+
+        // Remplacer les IDs par les noms d'aéroports
+        const volsAvecNoms = vols.map(vol => {
+            const aeroportDepart = aeroports.find(a => a.idAeroport === vol.aeroportDepartId || a.idAeroport === vol.idAeroportDepart);
+            const aeroportDest = aeroports.find(a => a.idAeroport === vol.aeroportDestinationId || a.idAeroport === vol.idAeroportDestination);
+
+            return {
+                ...vol,
+                aeroportDepartNom: aeroportDepart ? `${aeroportDepart.nomAeroport} (${aeroportDepart.codeIata})` : 'N/A',
+                aeroportDestinationNom: aeroportDest ? `${aeroportDest.nomAeroport} (${aeroportDest.codeIata})` : 'N/A'
+            };
+        });
+
+        displayVols(volsAvecNoms);
     } catch (error) {
-        console.error('Erreur:', error);
+        console.error('Erreur lors de la recherche de vols:', error);
     }
 }
 
+// =======================
+// Affichage des vols dans le tableau
+// =======================
 function displayVols(vols) {
     const tbody = document.querySelector('#volsTable tbody');
     tbody.innerHTML = '';
-    
+
     vols.forEach(vol => {
         const tr = document.createElement('tr');
-        const departAeroport = aeroports.find(a => a.idAeroport === vol.aeroportDepartId);
-        const destAeroport = aeroports.find(a => a.idAeroport === vol.aeroportDestinationId);
-        
         tr.innerHTML = `
             <td><strong>${vol.numeroVol || 'N/A'}</strong></td>
-            <td>${departAeroport?.codeIata || 'N/A'}</td>
-            <td>${destAeroport?.codeIata || 'N/A'}</td>
+            <td>${vol.aeroportDepartNom || (aeroports.find(a => a.idAeroport === vol.aeroportDepartId) ? `${aeroports.find(a => a.idAeroport === vol.aeroportDepartId).nomAeroport} (${aeroports.find(a => a.idAeroport === vol.aeroportDepartId).codeIata})` : 'N/A')}</td>
+            <td>${vol.aeroportDestinationNom || (aeroports.find(a => a.idAeroport === vol.aeroportDestinationId) ? `${aeroports.find(a => a.idAeroport === vol.aeroportDestinationId).nomAeroport} (${aeroports.find(a => a.idAeroport === vol.aeroportDestinationId).codeIata})` : 'N/A')}</td>
             <td>${formatDate(vol.dateDepart)}</td>
             <td>${formatDate(vol.dateArrivee)}</td>
-            <td>${vol.prixBase?.toFixed(2)} €</td>
-            <td><span class="badge bg-info">${vol.etatVolId || 'N/A'}</span></td>
+            <td>${vol.prixBase?.toFixed(2) || 'N/A'} €</td>
+            <td><span class="badge bg-info">${vol.etatVolId || vol.etatVol || 'N/A'}</span></td>
             <td>
                 <button class="btn btn-sm btn-warning" onclick='editVol(${JSON.stringify(vol)})'>
                     <i class="bi bi-pencil"></i>
@@ -125,6 +162,9 @@ function displayVols(vols) {
     });
 }
 
+// =======================
+// Fonctions utilitaires
+// =======================
 function formatDate(dateStr) {
     if (!dateStr) return 'N/A';
     const date = new Date(dateStr);
@@ -141,8 +181,8 @@ function editVol(vol) {
     document.getElementById('volId').value = vol.idVol;
     document.getElementById('numeroVol').value = vol.numeroVol;
     document.getElementById('prixBase').value = vol.prixBase;
-    document.getElementById('aeroportDepartId').value = vol.aeroportDepartId || vol.idAeroportDepart || vol.aeroportDepart;
-    document.getElementById('aeroportDestinationId').value = vol.aeroportDestinationId || vol.idAeroportDestination || vol.aeroportDestination;
+    document.getElementById('aeroportDepartId').value = vol.aeroportDepartId || vol.idAeroportDepart || '';
+    document.getElementById('aeroportDestinationId').value = vol.aeroportDestinationId || vol.idAeroportDestination || '';
     document.getElementById('avionId').value = vol.idAvion || vol.avionId || '';
     document.getElementById('companyId').value = vol.idCompany || vol.companyId || '';
     document.getElementById('dateDepart').value = vol.dateDepart?.slice(0, 16);
