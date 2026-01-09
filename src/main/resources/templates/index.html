@@ -157,54 +157,6 @@
     <footer th:replace="~{layout :: footer}"></footer>
 
     <div th:replace="~{layout :: scripts}"></div>
-    <script>
-            // Charger les statistiques
-            async function loadStats() {
-                try {
-                    const aeroports = await fetch('/api/aeroports').then(r => r.json());
-                    const vols = await fetch('/api/vols').then(r => r.json());
-                    
-                    document.getElementById('statsAeroports').textContent = aeroports.length;
-                    document.getElementById('statsVols').textContent = vols.length;
-                    document.getElementById('statsReservations').textContent = '0';
-                    document.getElementById('statsPassagers').textContent = '0';
-                } catch (error) {
-                    console.error('Erreur chargement stats:', error);
-                }
-            }
-            
-            loadStats();
-            if (document.getElementById('manageAvionSelect')) {
-                loadAvionsForManage();
-            }
-
-            async function loadAvionsForManage() {
-                try {
-                    const res = await fetch('/api/avions');
-                    const avions = await res.json();
-                    const sel = document.getElementById('manageAvionSelect');
-                    sel.innerHTML = '';
-                    if (!avions || avions.length === 0) {
-                        const opt = document.createElement('option'); opt.value = ''; opt.textContent = 'Aucun avion'; sel.appendChild(opt);
-                        return;
-                    }
-                    avions.forEach(a => {
-                        const opt = document.createElement('option'); opt.value = a.id; opt.textContent = a.modele + ' (' + a.id + ')'; sel.appendChild(opt);
-                    });
-
-                    document.getElementById('manageSeatsBtn').addEventListener('click', () => {
-                        const id = sel.value;
-                        if (!id) {
-                            document.getElementById('manageMsg').textContent = 'Sélectionnez un avion.';
-                            return;
-                        }
-                        window.location.href = '/admin/aircraft/' + id + '/seats';
-                    });
-                } catch (e) {
-                    console.error('Erreur chargement avions:', e);
-                    document.getElementById('manageMsg').textContent = 'Impossible de charger la liste des avions.';
-                }
-            }
-    </script>
+   <script th:src="@{/js/dashboard.js}"></script>
 </body>
 </html>

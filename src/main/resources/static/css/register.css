@@ -1,0 +1,80 @@
+/* -----------------------
+   Style global
+----------------------- */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f5f6fa;
+    margin: 0;
+    /* Supprime le flex centré */
+    display: block;
+}
+
+/* -----------------------
+   Formulaire d'inscription
+----------------------- */
+form {
+    background-color: #fff;
+    padding: 30px 40px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    width: 300px;
+    margin: 50px auto; /* Centré horizontalement + 50px du haut */
+}
+
+h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #2f3640;
+}
+
+form div {
+    margin-bottom: 15px;
+}
+
+label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #2f3640;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 5px;
+    border: 1px solid #dcdde1;
+    box-sizing: border-box;
+}
+
+button {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    background-color: #44bd32;
+    color: #fff;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+button:hover {
+    background-color: #2f7a20;
+}
+
+a {
+    text-decoration: none;
+    color: #0097e6;
+}
+
+a:hover {
+    text-decoration: underline;
+    color: #40739e;
+}
+
+p {
+    margin: 0;
+    font-size: 0.9em;
+}
