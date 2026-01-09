@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head}">
+</head>
+<body>
+    <nav th:replace="~{layout :: navbar}"></nav>
+
+    <main class="py-4">
+        <div class="container">
+            <div class="row text-center mb-5">
+                <div class="col-12">
+                    <h1 class="display-4 mb-3">
+                        <i class="bi bi-airplane-fill text-primary"></i> 
+                        Système de Gestion Airline
+                    </h1>
+                    <p class="lead text-muted">Gestion complète des vols, aéroports et réservations</p>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card h-100 text-center p-4">
+                        <div class="card-body">
+                            <i class="bi bi-pin-map feature-icon"></i>
+                            <h3 class="card-title mt-3">Aéroports</h3>
+                            <p class="card-text">Gérez les aéroports, codes IATA/ICAO et destinations</p>
+                            <a href="/aeroports" class="btn btn-primary">
+                                <i class="bi bi-arrow-right"></i> Accéder
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card h-100 text-center p-4">
+                        <div class="card-body">
+                            <i class="bi bi-airplane-engines feature-icon"></i>
+                            <h3 class="card-title mt-3">Vols</h3>
+                            <p class="card-text">Planifiez et gérez les vols, horaires et disponibilités</p>
+                            <a href="/vols" class="btn btn-primary">
+                                <i class="bi bi-arrow-right"></i> Accéder
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card h-100 text-center p-4">
+                        <div class="card-body">
+                            <i class="bi bi-ticket-perforated feature-icon"></i>
+                            <h3 class="card-title mt-3">Réservations</h3>
+                            <p class="card-text">Gérez les réservations passagers et billets</p>
+                            <a href="/reservations" class="btn btn-primary">
+                                <i class="bi bi-arrow-right"></i> Accéder
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-5">
+                <div class="col-12">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h4 class="card-title">
+                                <i class="bi bi-info-circle"></i> Statistiques rapides
+                            </h4>
+                            <div class="row text-center mt-4">
+                                <div class="col-md-3">
+                                    <h2 class="text-primary" id="statsAeroports">-</h2>
+                                    <p class="text-muted">Aéroports</p>
+                                </div>
+                                <div class="col-md-3">
+                                    <h2 class="text-primary" id="statsVols">-</h2>
+                                    <p class="text-muted">Vols actifs</p>
+                                </div>
+                                <div class="col-md-3">
+                                    <h2 class="text-primary" id="statsReservations">-</h2>
+                                    <p class="text-muted">Réservations</p>
+                                </div>
+                                <div class="col-md-3">
+                                    <h2 class="text-primary" id="statsPassagers">-</h2>
+                                    <p class="text-muted">Passagers</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer th:replace="~{layout :: footer}"></footer>
+
+    <div th:replace="~{layout :: scripts}"></div>
+    <script>
+            // Charger les statistiques
+            async function loadStats() {
+                try {
+                    const aeroports = await fetch('/api/aeroports').then(r => r.json());
+                    const vols = await fetch('/api/vols').then(r => r.json());
+                    
+                    document.getElementById('statsAeroports').textContent = aeroports.length;
+                    document.getElementById('statsVols').textContent = vols.length;
+                    document.getElementById('statsReservations').textContent = '0';
+                    document.getElementById('statsPassagers').textContent = '0';
+                } catch (error) {
+                    console.error('Erreur chargement stats:', error);
+                }
+            }
+            
+            loadStats();
+    </script>
+</body>
+</html>

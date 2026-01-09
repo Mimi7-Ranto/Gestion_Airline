@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head}">
+</head>
+<body>
+    <nav th:replace="~{layout :: navbar}"></nav>
+
+    <main class="py-4">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-pin-map"></i> Gestion des Aéroports</h2>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#aeroportModal" onclick="resetForm()">
+                    <i class="bi bi-plus-circle"></i> Nouvel Aéroport
+                </button>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="aeroportsTable">
+                            <thead>
+                                <tr>
+                                    <th>Code IATA</th>
+                                    <th>Code ICAO</th>
+                                    <th>Nom</th>
+                                    <th>Ville</th>
+                                    <th>Pays</th>
+                                    <th>Fuseau horaire</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Rempli dynamiquement -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Aéroport -->
+        <div class="modal fade" id="aeroportModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalTitle">Nouvel Aéroport</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="aeroportForm">
+                            <input type="hidden" id="aeroportId">
+                            <div class="mb-3">
+                                <label for="codeIata" class="form-label">Code IATA *</label>
+                                <input type="text" class="form-control" id="codeIata" required maxlength="3" placeholder="Ex: CDG">
+                            </div>
+                            <div class="mb-3">
+                                <label for="codeIcao" class="form-label">Code ICAO *</label>
+                                <input type="text" class="form-control" id="codeIcao" required maxlength="4" placeholder="Ex: LFPG">
+                            </div>
+                            <div class="mb-3">
+                                <label for="nomAeroport" class="form-label">Nom de l'aéroport *</label>
+                                <input type="text" class="form-control" id="nomAeroport" required placeholder="Ex: Charles de Gaulle">
+                            </div>
+                            <div class="mb-3">
+                                <label for="ville" class="form-label">Ville *</label>
+                                <input type="text" class="form-control" id="ville" required placeholder="Ex: Paris">
+                            </div>
+                            <div class="mb-3">
+                                <label for="pays" class="form-label">Pays *</label>
+                                <input type="text" class="form-control" id="pays" required placeholder="Ex: France">
+                            </div>
+                            <div class="mb-3">
+                                <label for="fuseauHoraire" class="form-label">Fuseau horaire *</label>
+                                <input type="text" class="form-control" id="fuseauHoraire" required placeholder="Ex: Europe/Paris">
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                        <button type="button" class="btn btn-primary" onclick="saveAeroport()">Enregistrer</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer th:replace="~{layout :: footer}"></footer>
+
+    <div th:replace="~{layout :: scripts}"></div>
+    <script>
+            const API_URL = '/api/aeroports';
+            let modal;
+
+            document.addEventListener('DOMContentLoaded', () => {
+                modal = new bootstrap.Modal(document.getElementById('aeroportModal'));
+                loadAeroports();
+            });
+
+            async function loadAeroports() {
+                try {
+                    const response = await fetch(API_URL);
+                    const aeroports = await response.json();
+                    displayAeroports(aeroports);
+                } catch (error) {
+                    console.error('Erreur:', error);
+                    alert('Erreur lors du chargement des aéroports');
+                }
+            }
+
+            function displayAeroports(aeroports) {
+                const tbody = document.querySelector('#aeroportsTable tbody');
+                tbody.innerHTML = '';
+                
+                aeroports.forEach(aeroport => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><strong>${aeroport.codeIata}</strong></td>
+                        <td>${aeroport.codeIcao}</td>
+                        <td>${aeroport.nomAeroport}</td>
+                        <td>${aeroport.ville}</td>
+                        <td>${aeroport.pays}</td>
+                        <td>${aeroport.fuseauHoraire}</td>
+                        <td>
+                            <button class="btn btn-sm btn-warning" onclick='editAeroport(${JSON.stringify(aeroport)})'>
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteAeroport('${aeroport.idAeroport}')">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            function resetForm() {
+                document.getElementById('aeroportForm').reset();
+                document.getElementById('aeroportId').value = '';
+                document.getElementById('modalTitle').textContent = 'Nouvel Aéroport';
+            }
+
+            function editAeroport(aeroport) {
+                document.getElementById('aeroportId').value = aeroport.idAeroport;
+                document.getElementById('codeIata').value = aeroport.codeIata;
+                document.getElementById('codeIcao').value = aeroport.codeIcao;
+                document.getElementById('nomAeroport').value = aeroport.nomAeroport;
+                document.getElementById('ville').value = aeroport.ville;
+                document.getElementById('pays').value = aeroport.pays;
+                document.getElementById('fuseauHoraire').value = aeroport.fuseauHoraire;
+                document.getElementById('modalTitle').textContent = 'Modifier Aéroport';
+                modal.show();
+            }
+
+            async function saveAeroport() {
+                const id = document.getElementById('aeroportId').value;
+                const data = {
+                    codeIata: document.getElementById('codeIata').value,
+                    codeIcao: document.getElementById('codeIcao').value,
+                    nomAeroport: document.getElementById('nomAeroport').value,
+                    ville: document.getElementById('ville').value,
+                    pays: document.getElementById('pays').value,
+                    fuseauHoraire: document.getElementById('fuseauHoraire').value
+                };
+
+                try {
+                    const url = id ? `${API_URL}/${id}` : API_URL;
+                    const method = id ? 'PUT' : 'POST';
+                    
+                    const response = await fetch(url, {
+                        method: method,
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+
+                    if (response.ok) {
+                        modal.hide();
+                        loadAeroports();
+                        alert('Aéroport enregistré avec succès');
+                    } else {
+                        alert('Erreur lors de l\'enregistrement');
+                    }
+                } catch (error) {
+                    console.error('Erreur:', error);
+                    alert('Erreur lors de l\'enregistrement');
+                }
+            }
+
+            async function deleteAeroport(id) {
+                if (!confirm('Êtes-vous sûr de vouloir supprimer cet aéroport ?')) return;
+
+                try {
+                    const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+                    if (response.ok) {
+                        loadAeroports();
+                        alert('Aéroport supprimé');
+                    } else {
+                        alert('Erreur lors de la suppression');
+                    }
+                } catch (error) {
+                    console.error('Erreur:', error);
+                    alert('Erreur lors de la suppression');
+                }
+            }
+    </script>
+</body>
+</html>
+</html>
