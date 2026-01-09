@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
+<head th:replace="~{layout :: head}"></head>
+<body>
+    <nav th:replace="~{layout :: navbar}"></nav>
+    <main class="py-4">
+        <div class="container">
+            <h2>Créer réservation (admin)</h2>
+
+            <div class="card p-4">
+                <form id="reservationForm">
+                    <!-- Vol -->
+                    <div class="mb-3">
+                        <label class="form-label"><strong>1. Sélection du vol</strong></label>
+                        <select id="volSelect" class="form-select"></select>
+                        <div id="volDetails" class="mt-2 text-muted small"></div>
+                    </div>
+
+                    <!-- Client -->
+                    <div class="mb-3">
+                        <label class="form-label"><strong>2. Client</strong></label>
+                        <div class="input-group mb-2">
+                            <input id="clientEmail" class="form-control" placeholder="Email client (obligatoire)" />
+                            <button type="button" id="findClientBtn" class="btn btn-outline-secondary">Rechercher</button>
+                        </div>
+                        <div id="clientFound"></div>
+                        
+                        <div class="mt-2">
+                            <small class="text-muted">Ou créer nouveau client :</small>
+                            <div class="row g-2 mt-1">
+                                <div class="col-md-3"><input id="clientPrenom" class="form-control form-control-sm" placeholder="Prénom"></div>
+                                <div class="col-md-3"><input id="clientNom" class="form-control form-control-sm" placeholder="Nom"></div>
+                                <div class="col-md-3"><input id="clientPhone" class="form-control form-control-sm" placeholder="Téléphone"></div>
+                                <div class="col-md-3"><input id="clientDOB" type="date" class="form-control form-control-sm"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Passagers -->
+                    <div class="mb-3">
+                        <label class="form-label"><strong>3. Passagers</strong></label>
+                        <div class="mb-2">
+                            <input id="nombrePassagers" type="number" min="1" value="1" class="form-control w-25 d-inline" />
+                            <button type="button" id="generatePassengersBtn" class="btn btn-sm btn-secondary ms-2">Générer champs</button>
+                        </div>
+                        <div id="passengersList"></div>
+                    </div>
+
+                    <!-- Sièges (optionnel) -->
+                    <div class="mb-3">
+                        <label class="form-label"><strong>4. Sièges (optionnel)</strong></label>
+                        <button type="button" id="loadSeatsBtn" class="btn btn-sm btn-outline-primary">Charger carte sièges</button>
+                        <div id="seatLegend" class="mt-2 d-none">
+                            <span class="badge bg-light text-dark border me-2">Libre</span>
+                            <span class="badge bg-success me-2">Sélectionné</span>
+                        </div>
+                        <div id="seatMap" class="mt-2"></div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="mt-4">
+                        <button type="button" id="confirmCreate" class="btn btn-success">Créer réservation</button>
+                        <a href="/" class="btn btn-secondary">Annuler</a>
+                    </div>
+                    <div id="resultMsg" class="mt-3"></div>
+                </form>
+            </div>
+        </div>
+    </main>
+    <footer th:replace="~{layout :: footer}"></footer>
+    <div th:replace="~{layout :: scripts}"></div>
+
+    <script>
+        window._selectedVol = null;
+        window._selectedClient = null;
+        window._selectedSeats = [];
+
+        async function loadVols(selectedId) {
+            const sel = document.getElementById('volSelect');
+            sel.innerHTML = '<option>Chargement...</option>';
+            try {
+                const res = await fetch('/api/vols');
+                const vols = await res.json();
+                sel.innerHTML = '';
+                vols.forEach(v => {
+                    const opt = document.createElement('option');
+                    opt.value = v.idVol || v.id;
+                    opt.textContent = (v.numeroVol || v.idVol) + ' — ' + (v.idAeroportDepart || '') + ' → ' + (v.idAeroportDestination || '');
+                    sel.appendChild(opt);
+                });
+                if (selectedId) sel.value = selectedId;
+                loadVolDetails(sel.value);
+            } catch (e) { sel.innerHTML = '<option>Erreur</option>'; }
+        }
+
+        async function loadVolDetails(volId) {
+            if (!volId) return;
+            try {
+                const res = await fetch('/api/vols/' + volId);
+                if (!res.ok) { document.getElementById('volDetails').textContent = 'Détails indisponibles'; return; }
+                const v = await res.json();
+                const html = `Départ: ${v.idAeroportDepart} (${v.dateDepart || ''}) | Arrivée: ${v.idAeroportDestination} (${v.dateArrivee || ''}) | Prix: ${v.prixBase}`;
+                document.getElementById('volDetails').textContent = html;
+                window._selectedVol = v;
+            } catch (e) { document.getElementById('volDetails').textContent = 'Erreur chargement vol'; }
+        }
+
+        document.getElementById('volSelect').addEventListener('change', (e) => loadVolDetails(e.target.value));
+
+        // Client search
+        document.getElementById('findClientBtn').addEventListener('click', async () => {
+            const email = document.getElementById('clientEmail').value;
+            if (!email) return;
+            const res = await fetch('/api/admin/clients?email=' + encodeURIComponent(email));
+            const el = document.getElementById('clientFound');
+            if (res.ok) {
+                const c = await res.json();
+                el.innerHTML = `<div class="alert alert-success">Client trouvé: ${c.prenomClient} ${c.nomClient} — ${c.email}</div>`;
+                window._selectedClient = c;
+            } else {
+                el.innerHTML = '<div class="alert alert-warning">Client introuvable</div>';
+                window._selectedClient = null;
+            }
+        });
+
+        async function ensureClientCreated() {
+            if (window._selectedClient) return window._selectedClient;
+            
+            // Validate required fields
+            const email = document.getElementById('clientEmail').value.trim();
+            if (!email) {
+                throw new Error('Email du client obligatoire. Veuillez remplir le champ email ou rechercher un client existant.');
+            }
+            
+            const prenom = document.getElementById('clientPrenom').value.trim();
+            const nom = document.getElementById('clientNom').value.trim();
+            
+            if (!prenom || !nom) {
+                throw new Error('Prénom et nom du client obligatoires pour créer un nouveau client.');
+            }
+            
+            const payload = {
+                prenom: prenom,
+                nom: nom,
+                email: email,
+                telephone: document.getElementById('clientPhone').value.trim(),
+                dateNaissance: document.getElementById('clientDOB').value
+            };
+            const res = await fetch('/api/admin/clients', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+            if (!res.ok) {
+                const errorText = await res.text();
+                throw new Error('Impossible de créer client: ' + errorText);
+            }
+            const c = await res.json();
+            window._selectedClient = c;
+            return c;
+        }
+
+        // Generate passenger fields
+        document.getElementById('generatePassengersBtn').addEventListener('click', () => {
+            const n = parseInt(document.getElementById('nombrePassagers').value || '1');
+            const container = document.getElementById('passengersList');
+            container.innerHTML = '';
+            for (let i=0;i<n;i++){
+                const div = document.createElement('div');
+                div.className = 'row g-2 mb-2';
+                div.innerHTML = `
+                    <div class="col-3"><input name="prenom" class="form-control form-control-sm" placeholder="Prénom passager ${i+1}"></div>
+                    <div class="col-3"><input name="nom" class="form-control form-control-sm" placeholder="Nom passager ${i+1}"></div>
+                    <div class="col-2"><input name="dateNaissance" type="date" class="form-control form-control-sm"></div>
+                    <div class="col-2"><input name="numeroPasseport" class="form-control form-control-sm" placeholder="Passeport"></div>
+                    <div class="col-2"><input name="nationalite" class="form-control form-control-sm" placeholder="Nationalité"></div>
+                `;
+                container.appendChild(div);
+            }
+        });
+
+        // Load seats
+        document.getElementById('loadSeatsBtn').addEventListener('click', async () => {
+            const vol = window._selectedVol;
+            const mapEl = document.getElementById('seatMap');
+            mapEl.innerHTML = 'Chargement sièges...';
+            if (!vol || !vol.idAvion) { mapEl.textContent = 'Avion non disponible pour ce vol'; return; }
+            try {
+                const res = await fetch('/api/admin/aircraft/' + vol.idAvion + '/seats');
+                if (!res.ok) { mapEl.textContent = 'Erreur chargement sièges'; return; }
+                const seats = await res.json();
+                const byRow = {};
+                seats.forEach(s => { if (!byRow[s.rangee]) byRow[s.rangee]=[]; byRow[s.rangee].push(s); });
+                mapEl.innerHTML = '';
+                document.getElementById('seatLegend').classList.remove('d-none');
+                Object.keys(byRow).sort((a,b)=>a-b).forEach(r => {
+                    const row = document.createElement('div'); row.className='d-flex mb-1';
+                    byRow[r].forEach(s => {
+                        const btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.className = 'btn btn-sm btn-light me-1';
+                        btn.textContent = s.numeroSiege;
+                        btn.dataset.seatId = s.id;
+                        btn.addEventListener('click', () => {
+                            btn.classList.toggle('btn-success');
+                            btn.classList.toggle('btn-light');
+                            updateSelectedSeats();
+                        });
+                        row.appendChild(btn);
+                    });
+                    mapEl.appendChild(row);
+                });
+            } catch (e) { mapEl.textContent = 'Erreur'; }
+        });
+
+        function updateSelectedSeats() {
+            const selected = Array.from(document.querySelectorAll('#seatMap button.btn-success')).map(b=>b.dataset.seatId);
+            window._selectedSeats = selected.filter(s => s);
+        }
+
+        // Create reservation
+        document.getElementById('confirmCreate').addEventListener('click', async () => {
+            try {
+                const client = await ensureClientCreated();
+                const volId = document.getElementById('volSelect').value;
+                const nombre = parseInt(document.getElementById('nombrePassagers').value || '1');
+                const passengerRows = document.querySelectorAll('#passengersList .row');
+                const passagers = Array.from(passengerRows).map(r => ({
+                    prenom: r.querySelector('input[name="prenom"]').value,
+                    nom: r.querySelector('input[name="nom"]').value,
+                    dateNaissance: r.querySelector('input[name="dateNaissance"]').value,
+                    numeroPasseport: r.querySelector('input[name="numeroPasseport"]').value,
+                    nationalite: r.querySelector('input[name="nationalite"]').value
+                }));
+                const payload = { volId, nombrePassagers: nombre, passagers, clientEmail: client.email, seatIds: window._selectedSeats };
+                const res = await fetch('/api/admin/reservations', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+                const msgEl = document.getElementById('resultMsg');
+                if (res.ok) {
+                    const body = await res.json();
+                    msgEl.innerHTML = '<div class="alert alert-success">✅ Réservation créée avec succès : ' + body.id + '</div>';
+                    document.getElementById('reservationForm').reset();
+                    window._selectedSeats = [];
+                }
+                else {
+                    const t = await res.text();
+                    msgEl.innerHTML = '<div class="alert alert-danger">❌ Erreur: '+t+'</div>';
+                }
+            } catch (e) {
+                document.getElementById('resultMsg').innerHTML = '<div class="alert alert-danger">❌ Erreur: ' + e.message + '</div>';
+            }
+        });
+
+        // Init
+        (function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const volId = urlParams.get('volId');
+            loadVols(volId);
+        })();
+    </script>
+</body>
+</html>

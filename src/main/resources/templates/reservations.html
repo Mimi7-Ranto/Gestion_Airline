@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head}">
+</head>
+<body>
+    <nav th:replace="~{layout :: navbar}"></nav>
+
+    <main class="py-4">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-ticket-perforated"></i> Réservations</h2>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">Rechercher un vol</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Aéroport de départ</label>
+                                    <select class="form-select" id="searchDepartId">
+                                        <option value="">Sélectionnez...</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Aéroport d'arrivée</label>
+                                    <select class="form-select" id="searchDestId">
+                                        <option value="">Sélectionnez...</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Date de départ</label>
+                                    <input type="date" class="form-control" id="searchDate">
+                                </div>
+                                <div class="col-md-6 d-flex align-items-end">
+                                    <button class="btn btn-primary w-100" onclick="searchFlights()">
+                                        <i class="bi bi-search"></i> Rechercher
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div id="resultsContainer" class="mt-4" style="display:none;">
+                                <h6 class="mb-3">Vols disponibles:</h6>
+                                <div id="flightResults"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0">Statistiques</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="text-center mb-3">
+                                <h3 class="text-primary" id="totalReservations">0</h3>
+                                <p class="text-muted">Réservations totales</p>
+                            </div>
+                            <hr>
+                            <div class="text-center">
+                                <h3 class="text-success" id="confirmedReservations">0</h3>
+                                <p class="text-muted">Confirmées</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mt-3">
+                        <div class="card-body">
+                            <h6 class="card-title">
+                                <i class="bi bi-info-circle"></i> Information
+                            </h6>
+                            <p class="small text-muted mb-0">
+                                Recherchez un vol disponible pour créer une nouvelle réservation. 
+                                Les fonctionnalités de réservation complètes seront disponibles prochainement.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer th:replace="~{layout :: footer}"></footer>
+
+    <div th:replace="~{layout :: scripts}"></div>
+    <script>
+            let aeroports = [];
+
+            document.addEventListener('DOMContentLoaded', async () => {
+                await loadAeroports();
+                loadStats();
+            });
+
+            async function loadAeroports() {
+                try {
+                    const response = await fetch('/api/aeroports');
+                    aeroports = await response.json();
+                    
+                    const selects = ['searchDepartId', 'searchDestId'];
+                    selects.forEach(selectId => {
+                        const select = document.getElementById(selectId);
+                        aeroports.forEach(a => {
+                            const option = document.createElement('option');
+                            option.value = a.idAeroport;
+                            option.textContent = `${a.codeIata} - ${a.nomAeroport}`;
+                            select.appendChild(option);
+                        });
+                    });
+                } catch (error) {
+                    console.error('Erreur:', error);
+                }
+            }
+
+            async function searchFlights() {
+                const departId = document.getElementById('searchDepartId').value;
+                const date = document.getElementById('searchDate').value;
+
+                if (!departId || !date) {
+                    alert('Veuillez sélectionner un aéroport de départ et une date');
+                    return;
+                }
+
+                try {
+                    const from = `${date}T00:00:00`;
+                    const to = `${date}T23:59:59`;
+                    const url = `/api/vols/search?departId=${departId}&from=${from}&to=${to}`;
+                    
+                    const response = await fetch(url);
+                    const vols = await response.json();
+                    
+                    displayFlightResults(vols);
+                } catch (error) {
+                    console.error('Erreur:', error);
+                    alert('Erreur lors de la recherche');
+                }
+            }
+
+            function displayFlightResults(vols) {
+                const container = document.getElementById('resultsContainer');
+                const results = document.getElementById('flightResults');
+                
+                if (vols.length === 0) {
+                    results.innerHTML = '<div class="alert alert-info">Aucun vol trouvé</div>';
+                    container.style.display = 'block';
+                    return;
+                }
+
+                results.innerHTML = vols.map(vol => {
+                    const depart = aeroports.find(a => a.idAeroport === vol.aeroportDepartId);
+                    const dest = aeroports.find(a => a.idAeroport === vol.aeroportDestinationId);
+                    
+                    return `
+                        <div class="card mb-2">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>${vol.numeroVol || 'N/A'}</strong>
+                                        <p class="mb-0 small text-muted">
+                                            ${depart?.codeIata} → ${dest?.codeIata}
+                                        </p>
+                                    </div>
+                                    <div class="text-end">
+                                        <strong class="text-primary">${vol.prixBase?.toFixed(2)} €</strong>
+                                        <p class="mb-0 small text-muted">
+                                            ${new Date(vol.dateDepart).toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'})}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                container.style.display = 'block';
+            }
+
+            function loadStats() {
+                // Simulé - à remplacer par de vraies données
+                document.getElementById('totalReservations').textContent = '0';
+                document.getElementById('confirmedReservations').textContent = '0';
+            }
+    </script>
+</body>
+</html>

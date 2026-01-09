@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>Gestion des sièges</title>
+    <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+<h1>Gestion des sièges — Avion: <span th:text="${avionModele}"></span></h1>
+
+<section>
+    <h3>Générer des sièges</h3>
+    <form id="generateForm" onsubmit="return false;">
+        <label>Lignes: <input type="number" id="rows" min="1" value="20"/></label>
+        <label>Sièges par ligne: <input type="number" id="seatsPerRow" min="1" value="6"/></label>
+        <label>Classe par défaut: <input type="text" id="seatClass" value="Economie"/></label>
+        <button id="generateBtn">Générer</button>
+    </form>
+    <div id="genMessage"></div>
+</section>
+
+<section>
+    <h3>Sièges existants</h3>
+    <table id="seatsTable" border="1">
+        <thead>
+            <tr>
+                <th>Numéro</th>
+                <th>Rangée</th>
+                <th>Lettre</th>
+                <th>Classe</th>
+                <th>Fenêtre</th>
+                <th>Couloir</th>
+                <th>Sortie secours</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</section>
+
+<script>
+    const avionId = /*[[${avionId}]]*/ 'AV000001';
+
+    async function loadSeats() {
+        const res = await fetch('/api/admin/aircraft/' + avionId + '/seats');
+        const seats = await res.json();
+        const tbody = document.querySelector('#seatsTable tbody');
+        tbody.innerHTML = '';
+        seats.forEach(s => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${s.numeroSiege}</td>
+                <td>${s.rangee}</td>
+                <td>${s.lettre}</td>
+                <td>${s.classe}</td>
+                <td>${s.estFenetre ? 'Oui' : 'Non'}</td>
+                <td>${s.estCouloir ? 'Oui' : 'Non'}</td>
+                <td>${s.estSortieSecours ? 'Oui' : 'Non'}</td>
+                <td><button onclick="editSeat('${s.id}')">Modifier</button></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    async function generateSeats() {
+        const rows = parseInt(document.getElementById('rows').value);
+        const seatsPerRow = parseInt(document.getElementById('seatsPerRow').value);
+        const seatClass = document.getElementById('seatClass').value;
+
+        const res = await fetch('/api/admin/aircraft/' + avionId + '/seats/generate', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({rows, seatsPerRow, seatClass})
+        });
+
+        if (res.ok) {
+            document.getElementById('genMessage').textContent = 'Sièges générés.';
+            await loadSeats();
+        } else {
+            document.getElementById('genMessage').textContent = 'Erreur lors de la génération.';
+        }
+    }
+
+    function editSeat(id) {
+        const newClass = prompt('Nouvelle classe (ex: Economie, Business):');
+        if (newClass === null) return;
+        const isFenetre = confirm('Fenêtre ? OK = Oui');
+        const isCouloir = confirm('Couloir ? OK = Oui');
+        const isExit = confirm('Sortie de secours ? OK = Oui');
+
+        fetch('/api/admin/seats/' + id, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({classe: newClass, estFenetre: isFenetre, estCouloir: isCouloir, estSortieSecours: isExit})
+        }).then(r => {
+            if (r.ok) loadSeats(); else alert('Erreur');
+        });
+    }
+
+    document.getElementById('generateBtn').addEventListener('click', generateSeats);
+    loadSeats();
+</script>
+
+</body>
+</html>
