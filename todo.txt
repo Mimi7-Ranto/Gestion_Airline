@@ -1,0 +1,66 @@
+Technologies finales validées
+
+Backend + Frontend : Spring Boot avec Thymeleaf (templates HTML côté serveur)
+UI : Bootstrap 5 (pour un design moderne et responsive)
+Base de données : PostgreSQL
+
+1. Préparation :
+Créer un repo GitHub : gestion_compagny
+ Installer :
+JDK 17 
+PostgreSQL
+
+ Créer la base de données :SQLCREATE DATABASE company;
+
+ 2. Créer le projet Spring Boot
+ Aller sur https://start.spring.io
+ Configurer :
+Project : Maven
+Language : Java
+Spring Boot : dernière version stable
+Dependencies à ajouter obligatoirement :
+Spring Web
+Thymeleaf ← important !
+Spring Data JPA
+PostgreSQL Driver
+Spring Security
+Lombok
+Spring Boot DevTools
+Flyway Migration
+Validation
+Springdoc OpenAPI (pour Swagger)
+
+
+ Télécharger, ouvrir dans IntelliJ
+ Configurer src/main/resources/application.yml :YAMLspring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/compagnie_aerienne_db
+    username: postgres
+    password: tonmotdepasse
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: validate
+  thymeleaf:
+    cache: false  # important en développement
+  flyway:
+    enabled: true
+server:
+  port: 8080
+
+3. Base de données – Créer les tables avec Flyway (2 jours)
+
+ Créer le dossier src/main/resources/db/migration
+ Ajouter le fichier V1__creation_tables.sql
+ Coller les CREATE TABLE (dans l’ordre : airports → aircrafts → users → flights → bookings → passengers → payments)
+ Lancer l’app → Flyway crée les tables automatiquement
+
+4. Créer les entités JPA et repositories (2-3 jours)
+
+ Créer un package entity
+ Créer les classes Java : Aeroport.java, Avion.java, Utilisateur.java, Vol.java, Reservation.java, Passager.java, Paiement.java
+ Utiliser les noms de champs en français
+ Créer les repositories (ex: VolRepository extends JpaRepository<Vol, Long>)
+
+ FONCTIONNALITÉS PRINCIPALES
+

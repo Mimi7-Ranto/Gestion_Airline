@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head}">
+</head>
+<body>
+    <nav th:replace="~{layout :: navbar}"></nav>
+
+    <main class="py-4">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-airplane-engines"></i> Gestion des Vols</h2>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#volModal" onclick="resetForm()">
+                    <i class="bi bi-plus-circle"></i> Nouveau Vol
+                </button>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Rechercher des vols</h5>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Aéroport de départ</label>
+                            <select class="form-select" id="searchDepartId">
+                                <option value="">Tous</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Date de départ (de)</label>
+                            <input type="datetime-local" class="form-control" id="searchFrom">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Date de départ (à)</label>
+                            <input type="datetime-local" class="form-control" id="searchTo">
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button class="btn btn-primary w-100" onclick="searchVols()">
+                                <i class="bi bi-search"></i> Rechercher
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="volsTable">
+                            <thead>
+                                <tr>
+                                    <th>N° Vol</th>
+                                    <th>Départ</th>
+                                    <th>Destination</th>
+                                    <th>Date Départ</th>
+                                    <th>Date Arrivée</th>
+                                    <th>Prix</th>
+                                    <th>État</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Rempli dynamiquement -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Vol -->
+        <div class="modal fade" id="volModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalTitle">Nouveau Vol</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="volForm">
+                            <input type="hidden" id="volId">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="numeroVol" class="form-label">N° de vol *</label>
+                                    <input type="text" class="form-control" id="numeroVol" required placeholder="Ex: AF001">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="prixBase" class="form-label">Prix de base *</label>
+                                    <input type="number" step="0.01" class="form-control" id="prixBase" required placeholder="Ex: 150.00">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="aeroportDepartId" class="form-label">Aéroport de départ *</label>
+                                    <select class="form-select" id="aeroportDepartId" required>
+                                        <option value="">Sélectionnez...</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="aeroportDestinationId" class="form-label">Aéroport d'arrivée *</label>
+                                    <select class="form-select" id="aeroportDestinationId" required>
+                                        <option value="">Sélectionnez...</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="dateDepart" class="form-label">Date de départ *</label>
+                                    <input type="datetime-local" class="form-control" id="dateDepart" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="dateArrivee" class="form-label">Date d'arrivée *</label>
+                                    <input type="datetime-local" class="form-control" id="dateArrivee" required>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                        <button type="button" class="btn btn-primary" onclick="saveVol()">Enregistrer</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer th:replace="~{layout :: footer}"></footer>
+
+    <div th:replace="~{layout :: scripts}"></div>
+    <script>
+            const API_URL = '/api/vols';
+            const AEROPORTS_URL = '/api/aeroports';
+            let modal;
+            let aeroports = [];
+
+            document.addEventListener('DOMContentLoaded', async () => {
+                modal = new bootstrap.Modal(document.getElementById('volModal'));
+                await loadAeroports();
+                loadVols();
+            });
+
+            async function loadAeroports() {
+                try {
+                    const response = await fetch(AEROPORTS_URL);
+                    aeroports = await response.json();
+                    
+                    // Remplir les selects
+                    const selects = ['aeroportDepartId', 'aeroportDestinationId', 'searchDepartId'];
+                    selects.forEach(selectId => {
+                        const select = document.getElementById(selectId);
+                        const keepFirst = selectId === 'searchDepartId';
+                        if (!keepFirst) select.innerHTML = '<option value="">Sélectionnez...</option>';
+                        
+                        aeroports.forEach(a => {
+                            const option = document.createElement('option');
+                            option.value = a.idAeroport;
+                            option.textContent = `${a.codeIata} - ${a.nomAeroport} (${a.ville})`;
+                            select.appendChild(option);
+                        });
+                    });
+                } catch (error) {
+                    console.error('Erreur chargement aéroports:', error);
+                }
+            }
+
+            async function loadVols() {
+                try {
+                    const response = await fetch(API_URL);
+                    const vols = await response.json();
+                    displayVols(vols);
+                } catch (error) {
+                    console.error('Erreur:', error);
+                }
+            }
+
+            async function searchVols() {
+                const departId = document.getElementById('searchDepartId').value;
+                const from = document.getElementById('searchFrom').value;
+                const to = document.getElementById('searchTo').value;
+
+                if (!departId || !from || !to) {
+                    loadVols();
+                    return;
+                }
+
+                try {
+                    const url = `${API_URL}/search?departId=${departId}&from=${from}&to=${to}`;
+                    const response = await fetch(url);
+                    const vols = await response.json();
+                    displayVols(vols);
+                } catch (error) {
+                    console.error('Erreur:', error);
+                }
+            }
+
+            function displayVols(vols) {
+                const tbody = document.querySelector('#volsTable tbody');
+                tbody.innerHTML = '';
+                
+                vols.forEach(vol => {
+                    const tr = document.createElement('tr');
+                    const departAeroport = aeroports.find(a => a.idAeroport === vol.aeroportDepartId);
+                    const destAeroport = aeroports.find(a => a.idAeroport === vol.aeroportDestinationId);
+                    
+                    tr.innerHTML = `
+                        <td><strong>${vol.numeroVol || 'N/A'}</strong></td>
+                        <td>${departAeroport?.codeIata || 'N/A'}</td>
+                        <td>${destAeroport?.codeIata || 'N/A'}</td>
+                        <td>${formatDate(vol.dateDepart)}</td>
+                        <td>${formatDate(vol.dateArrivee)}</td>
+                        <td>${vol.prixBase?.toFixed(2)} €</td>
+                        <td><span class="badge bg-info">${vol.etatVolId || 'N/A'}</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-warning" onclick='editVol(${JSON.stringify(vol)})'>
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteVol('${vol.idVol}')">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            function formatDate(dateStr) {
+                if (!dateStr) return 'N/A';
+                const date = new Date(dateStr);
+                return date.toLocaleString('fr-FR');
+            }
+
+            function resetForm() {
+                document.getElementById('volForm').reset();
+                document.getElementById('volId').value = '';
+                document.getElementById('modalTitle').textContent = 'Nouveau Vol';
+            }
+
+            function editVol(vol) {
+                document.getElementById('volId').value = vol.idVol;
+                document.getElementById('numeroVol').value = vol.numeroVol;
+                document.getElementById('prixBase').value = vol.prixBase;
+                document.getElementById('aeroportDepartId').value = vol.aeroportDepartId;
+                document.getElementById('aeroportDestinationId').value = vol.aeroportDestinationId;
+                document.getElementById('dateDepart').value = vol.dateDepart?.slice(0, 16);
+                document.getElementById('dateArrivee').value = vol.dateArrivee?.slice(0, 16);
+                document.getElementById('modalTitle').textContent = 'Modifier Vol';
+                modal.show();
+            }
+
+            async function saveVol() {
+                const id = document.getElementById('volId').value;
+                const data = {
+                    numeroVol: document.getElementById('numeroVol').value,
+                    prixBase: parseFloat(document.getElementById('prixBase').value),
+                    aeroportDepartId: document.getElementById('aeroportDepartId').value,
+                    aeroportDestinationId: document.getElementById('aeroportDestinationId').value,
+                    dateDepart: document.getElementById('dateDepart').value,
+                    dateArrivee: document.getElementById('dateArrivee').value
+                };
+
+                try {
+                    const url = id ? `${API_URL}/${id}` : API_URL;
+                    const method = id ? 'PUT' : 'POST';
+                    
+                    const response = await fetch(url, {
+                        method: method,
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+
+                    if (response.ok) {
+                        modal.hide();
+                        loadVols();
+                        alert('Vol enregistré avec succès');
+                    } else {
+                        const error = await response.text();
+                        alert('Erreur: ' + error);
+                    }
+                } catch (error) {
+                    console.error('Erreur:', error);
+                    alert('Erreur lors de l\'enregistrement');
+                }
+            }
+
+            async function deleteVol(id) {
+                if (!confirm('Êtes-vous sûr de vouloir supprimer ce vol ?')) return;
+
+                try {
+                    const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+                    if (response.ok) {
+                        loadVols();
+                        alert('Vol supprimé');
+                    }
+                } catch (error) {
+                    console.error('Erreur:', error);
+                }
+            }
+    </script>
+</body>
+</html>

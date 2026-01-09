@@ -1,0 +1,159 @@
+1-Authentification et gestion des utilisateurs
+Page d’inscription (passager)
+Page de connexion / déconnexion
+Rôles : passager et admin (Spring Security)
+Protection des pages admin
+
+2-CRUD Profil Utilisateur
+
+✅ Consulter son profil (GET /api/users/me)
+✅ Modifier son profil (PUT /api/users/me)
+✅ Changer mot de passe (PUT /api/users/me/password)
+✅ Supprimer compte (DELETE /api/users/me)
+
+2. Gestion des Aéroports ⭐⭐⭐⭐⭐
+Priorité: CRITIQUE
+CRUD Aéroports (Admin uniquement)
+
+✅ Créer un aéroport (POST)
+✅ Lister tous les aéroports (GET avec pagination)
+✅ Rechercher aéroports (par pays, ville, code IATA)
+✅ Consulter détails d'un aéroport (GET by ID)
+✅ Modifier un aéroport (PUT)
+✅ Supprimer un aéroport (DELETE - soft delete)
+✅ Activer/Désactiver un aéroport (PATCH)
+
+3. Gestion des Avions ⭐⭐⭐⭐⭐
+Priorité: CRITIQUE
+CRUD Modèles d'Avions (Admin)
+
+✅ Créer un modèle d'avion (POST)
+✅ Lister tous les modèles (GET)
+✅ Consulter détails modèle (GET by ID)
+✅ Modifier un modèle (PUT)
+✅ Supprimer un modèle (DELETE)
+
+CRUD Avions (Admin)
+
+✅ Ajouter un avion à la flotte (POST)
+✅ Lister tous les avions (GET avec filtres)
+✅ Consulter détails avion (GET by ID)
+✅ Modifier un avion (PUT)
+✅ Changer statut avion (PATCH - AVAILABLE, IN_FLIGHT, MAINTENANCE)
+✅ Retirer un avion (DELETE - soft delete)
+✅ Voir historique des vols d'un avion
+
+4. Gestion des Vols ⭐⭐⭐⭐⭐
+Priorité: CRITIQUE
+CRUD Vols (Admin/Staff)
+
+✅ Créer un vol (POST)
+✅ Lister tous les vols (GET avec pagination)
+✅ Consulter détails vol (GET by ID)
+✅ Modifier un vol (PUT)
+✅ Annuler un vol (PATCH /cancel)
+✅ Changer statut vol (PATCH /status)
+✅ Supprimer un vol (DELETE)
+
+Recherche de Vols (Public)
+
+✅ Rechercher vols disponibles
+
+Par origine/destination
+Par date (aller simple ou aller-retour)
+Par nombre de passagers
+Filtrer par prix, horaires, durée
+Trier par prix, durée, départ
+
+🟠 PHASE 2 - RÉSERVATION (Sprint 3-4) - 3-4 semaines
+5. Gestion des Sièges ⭐⭐⭐⭐
+Priorité: HAUTE
+CRUD Sièges
+
+✅ Générer sièges pour un avion (POST /aircraft/{id}/seats/generate)
+✅ Lister sièges d'un avion (GET)
+✅ Lister sièges disponibles pour un vol (GET)
+✅ Consulter détails siège (GET by ID)
+✅ Modifier configuration siège (PUT)
+✅ Carte des sièges avec statuts (occupied/available/reserved)
+
+
+6. Système de Réservation ⭐⭐⭐⭐⭐
+Priorité: CRITIQUE
+CRUD Réservations
+
+✅ Créer une réservation (POST)
+
+Sélection du vol
+Ajout des passagers
+Sélection des sièges
+Calcul du prix total
+
+
+✅ Consulter ses réservations (GET /my-bookings)
+✅ Consulter détails réservation (GET by ID)
+✅ Modifier réservation (PUT - avant 24h du vol)
+✅ Annuler réservation (PATCH /cancel)
+✅ Vérifier disponibilité avant réservation
+
+Admin - Gestion Réservations
+
+✅ Lister toutes les réservations (GET avec filtres)
+✅ Rechercher réservation par référence
+✅ Modifier statut réservation
+✅ Statistiques réservations
+
+7. Gestion des Passagers ⭐⭐⭐⭐
+Priorité: HAUTE
+CRUD Passagers
+
+✅ Ajouter passagers à réservation (POST)
+✅ Lister passagers d'une réservation (GET)
+✅ Consulter détails passager (GET by ID)
+✅ Modifier infos passager (PUT)
+✅ Supprimer passager (DELETE - avant confirmation)
+✅ Valider documents passager (passeport, visa)
+
+8. Gestion des Billets ⭐⭐⭐⭐
+Priorité: HAUTE
+CRUD Billets
+
+✅ Générer billets après paiement (POST - auto)
+✅ Consulter ses billets (GET /my-tickets)
+✅ Consulter détails billet (GET by ID)
+✅ Télécharger billet PDF (GET /download)
+✅ Envoyer billet par email (POST /send-email)
+✅ Consulter billet par numéro (GET by ticket number)
+
+🟡 PHASE 3 - PAIEMENT
+
+9. Système de Paiement ⭐⭐⭐⭐⭐
+Priorité: CRITIQUE
+Gestion Paiements
+
+✅ Initier paiement (POST)
+✅ Intégration Stripe/PayPal
+✅ Confirmation paiement (webhook)
+✅ Consulter historique paiements (GET)
+✅ Consulter détails paiement (GET by ID)
+✅ Demander remboursement (POST /refund)
+✅ Traiter remboursement (Admin)
+✅ Paiement en plusieurs fois (si applicable)
+
+🟢 PHASE 4 - CHECK-IN & OPÉRATIONS 
+10. Check-in en Ligne ⭐⭐⭐⭐
+Priorité: HAUTE
+Fonctionnalités Check-in
+
+✅ Check-in en ligne (POST)
+
+48h avant le vol
+Sélection/modification siège
+Ajout bagages
+
+
+✅ Consulter statut check-in (GET)
+✅ Télécharger carte d'embarquement (GET /boarding-pass)
+✅ Annuler check-in (DELETE)
+✅ Check-in groupe (pour tous les passagers)
+
